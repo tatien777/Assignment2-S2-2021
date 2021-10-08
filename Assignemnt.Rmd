@@ -1,0 +1,25 @@
+---
+title: "Assignment2 - STAT8121"
+author: "Minh Tien Ta - 46207031"
+date: "1 Oct 2021"
+header-includes:
+  - \usepackage{float}
+output: 
+  pdf_document:
+    extra_dependencies: ["flafter"]
+    fig_caption: yes
+    # number_sections: TRUE
+    toc: true
+    toc_depth: 2
+urlcolor: blue
+font-size: 10
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
