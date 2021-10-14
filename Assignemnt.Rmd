@@ -1,7 +1,7 @@
 ---
 title: "Assignment2 - STAT8121"
 author: "Minh Tien Ta - 46207031"
-date: "1 Oct 2021"
+date: "20 Oct 2021"
 header-includes:
   - \usepackage{float}
 output: 
@@ -19,7 +19,233 @@ font-size: 10
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Question1 
+### Reading dataset 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r, include=FALSE}
+paramo <- read.table('data/paramo.dat',header=T)
+print(dim(paramo))
+tail(paramo,3)
+```
+
+
+
+### a. Produce a scatterplot and correlation matrix of the data and comment on possible relationships between the response and predictors and relationships between the predictors themselves.
+
+```{r , include= FALSE}
+### scatter with correlation matrix and fit lines 
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...) {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- abs(cor(x, y, use = "complete.obs"))
+  txt <- format(c(r, 0.123456789), digits = digits)[1]
+  txt <- paste(prefix, txt, sep = "")
+  if (missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex =  cex.cor * (1 + r) / 2)
+}
+panel.hist <- function(x, ...) {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(usr[1:2], 0, 1.5) )
+  h <- hist(x, plot = FALSE)
+  breaks <- h$breaks
+  nB <- length(breaks)
+  y <- h$counts
+  y <- y/max(y)
+  rect(breaks[-nB], 0, breaks[-1], y, col = "white", ...)
+}
+panel.lm <- function (x, y, col = par("col"), bg = NA, pch = par("pch"),
+                      cex = 1, col.smooth = "black", ...) {
+  points(x, y, pch = pch, col = col, bg = bg, cex = cex)
+  abline(stats::lm(y ~ x),  col = col.smooth, ...)
+}
+panel.lm <- function (x, y, col = par("col"), bg = NA, pch = par("pch"),
+                      cex = 1, col.smooth = "black", ...) {
+  points(x, y, pch = pch, col = col, bg = bg, cex = cex)
+  abline(stats::lm(y ~ x),  col = col.smooth, ...)
+}
+```
+
+
+```{r}
+pairs(paramo[1:5],
+      upper.panel = panel.cor,
+      diag.panel  = panel.hist,
+      lower.panel = panel.smooth,
+      # pch = "."
+      )
+```
+
+**Comments:** 
+
+
+### b. Conduct an F-test for the overall regression
+### b1.  Write down the mathematical multiple regression model for this situation, defining all appropriate parameters
+
+We have the multiple regression model which can be written by this: 
+
+**Regression line**: $Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4X_4 + \varepsilon; \ \ \ \varepsilon \sim N(0,\sigma^2)$
+
+where: 
+  
+  - Y : N - The number of species of birds observed. 
+  
+  - X1,X2,X3,X4 : AR, EL, DEc, DNI variables respectively.
+  
+  - $\beta_1,\beta_2,\beta_3,\beta_4$ : AR, EL, DEc, DNI regression coefficients respectively.
+  
+  - $\beta_0$ :Intercept term
+
+### b2.  Write down the Hypotheses for the Overall ANOVA test of multiple regression
+
+Hypotheses of Anova test in multiple regression:
+
+$H_0: \beta_1,\beta_2,\beta_3,\beta_4 = 0; \ \ and \ H_1 = \ at \ least \ one \ \beta_i \neq0$
+
+
+### b3.  Produce an ANOVA table for the overall multiple regression model (One combined regression SS source is sufficient)
+
+Now, Anova tables would be: 
+
+```{r}
+paramo.aov = anova(lm(N ~ AR + EL + DEc + DNI , data = paramo))
+paramo.aov
+```
+
+### b4.  Compute the F statistic for this test
+
+
+```{r , include=FALSE}
+paramo.lm.all = lm(N ~ AR + EL + DEc + DNI , data = paramo)
+fstatis = summary(paramo.lm.all)$fstatistic[1] ; fstatis
+summary(paramo.lm.all)
+```
+```{r}
+n = nrow(paramo) ; k  = ncol(paramo) ; n ; k
+df1 = k - 1; df2 = n - k; df1 ;df2
+Full_RegSS  = sum(paramo.aov[["Mean Sq"]][1:4])
+Reg_MS = Full_RegSS/4   
+Res_MS = paramo.aov[["Mean Sq"]][5]
+F_obs = Reg_MS/ Res_MS ; F_obs
+```
+
+
+### b5.  State the Null distribution
+
+
+If  $p_{value} \le \alpha$ reject the null hypothesis. $p_{value} > \alpha$ If  fail to reject the null hypothesis
+
+### b6.  Compute the P-Value
+
+we can caculate that the P-value $P(F_{4,10} \ge 6.0854) = 0.0095 < 0.05$, then we reject $H_0$ at the 5% level.
+
+```{r}
+pf(F_obs, df1, df2, lower.tail = FALSE)
+```
+
+### b7. State your conclusion (both statistical conclusion and contextual conclusion)
+
+There is  a significant linear relationship between percentage response N and at least one of the four predictor variables.
+
+### c. Validate the full model using all the predictors and comment on whether it is appropriate to a multiple regression model to explain the N abundance value.
+
+Now we will check the assumptions of the model whether is appropriate to a multiple regression model  
+
+**Check diagnostics: **
+
+```{r}
+plot(paramo.lm.all, which = 1:2)
+```
+
+**Check residuals against predictors:**
+
+```{r}
+# plot(resid(paramo.lm.all) ~  AR + EL + DEc + DNI, data= paramo)
+par(mfrow = c(2, 2))
+plot(paramo$AR, residuals(paramo.lm.all))
+plot(paramo$EL, residuals(paramo.lm.all))
+plot(paramo$DEc, residuals(paramo.lm.all))
+plot(paramo$DNI, residuals(paramo.lm.all))
+```
+
+
+### d Find the $R^2$ and comment on what it means in the context of this dataset
+
+We can obtain $R^2$ for the multiple regression like this: 
+
+- $R^2 = \frac{SS_{Regression}}{SS_{Total}}   = \frac{SS_{Total} -SS_{Residuals}} {SS_{Total}}$
+
+- $R^2 = \frac{1498.857 -404.5895}{1498.857} = 0.7301$
+
+```{r}
+total_SumSQ = sum(paramo.aov[["Sum Sq"]][1:5]); total_SumSQ
+SQ_reg = paramo.aov[["Sum Sq"]][5] ; SQ_reg
+round((total_SumSQ - SQ_reg)/total_SumSQ,4)
+```
+
+### e. Using model selection procedures used in the course, find the best multiple regression model that explains the data. State the final fitted regression model.
+
+Based on the result of the model in 4 predictors, we can remove the insignficant variables like DNE
+
+```{r}
+para.lm.2 = lm(formula = N ~ AR + EL + DEc , data = paramo)
+summary(para.lm.2)
+para.lm.3 = lm(formula = N ~ AR  + DEc , data = paramo)
+summary(para.lm.3)
+plot(para.lm.3, which = 1:2)
+```
+
+
+
+### f. Comment on the R2 and Adjusted R2 in the full and final model you chose in part e. In particular explain why those goodness of fitness measures change but not in the same way.
+
+Default adjusted $R^2$ is: 
+
+Adjusted $R^2$ = $R^2 - (1-R^2) \frac{p-1}{n-p}$ where n = 14 and p = 3 for model 3.  
+
+
+```{r}
+para.anova.3 = anova(lm(formula = N ~ AR  + DEc , data = paramo))
+para.anova.3
+R_2_model3 = (sum(para.anova.3$`Sum Sq`[1:3]) - para.anova.3$`Sum Sq`[3] ) / sum(para.anova.3$`Sum Sq`[1:3])
+p = 3; n= 14
+AdjR_2_model3= R_2_model3 - (1-R_2_model3)* (p-1)/(n-p) ; AdjR_2_model3
+```
+
+
+### g. Compute a 95% confidence interval for the AR regression parameter and explain what it means in the context of this data
+
+So, 95% confidence interval for AR is:
+
+- $\widehat{\beta_{AR}} \pm t_{0.05,11} \times s.e(\widehat{\beta_{AR}}) = 6.683 \pm 2.032 \times 2.2644 = (1.6991,11.6669)$
+
+```{r}
+coef_AR = summary(para.lm.3)$coeff[2] ; coef_AR
+se_AR = summary(para.lm.3)$coef[5] ; se_AR
+alpha = 0.05; t_table = qt(1- alpha/2,11) ; t_table
+c(coef_AR - t_table*se_AR,coef_AR + t_table*se_AR)
+```
+
+## Question2 
+
+
+### a. For this study, is the design balanced or unbalanced? Explain why
+
+### b. Construct two different preliminary graphs that investigate different features of the data and comment.
+
+### c. Explain why we cannot fit a Two-Way ANOVA with interaction model to this dataset.
+
+### d. check assumptions: 
+### d1. Write down the mathematical model for this situation, defining all appropriate parameters
+
+### d2. State the appropriate hypotheses
+
+### d3. Compute an appropriate ANOVA table
+
+### d4. Check assumptions
+
+
+### e.  State your conclusions about the effect of Shrews and Sleep on HeartRates. You do not need to statistically examine the multiple comparisons.
+
 
