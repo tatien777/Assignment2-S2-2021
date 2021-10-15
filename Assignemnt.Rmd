@@ -23,6 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Reading dataset 
 
 ```{r, include=FALSE}
+library(ggplot2)
 paramo <- read.table('data/paramo.dat',header=T)
 print(dim(paramo))
 tail(paramo,3)
@@ -229,23 +230,121 @@ c(coef_AR - t_table*se_AR,coef_AR + t_table*se_AR)
 
 ## Question2 
 
+```{r}
+trShrew = read.table('data/TreeShrews.dat',header=T)
+trShrew$Shrews = as.factor(trShrew$Shrews)
+head(trShrew,3)
+```
+
 
 ### a. For this study, is the design balanced or unbalanced? Explain why
 
+```{r}
+table(trShrew[, c("Shrews", "Sleep")])
+```
+As we can see the result, the design is balanced because of  equal group sizes
+
 ### b. Construct two different preliminary graphs that investigate different features of the data and comment.
 
+```{r}
+# Preliminary Investigation
+with(trShrew, interaction.plot(Shrews, Sleep, HeartRates,
+trace.label = "HeartRates",xlab = "Shrews", ylab = "Sleep", col = 1:3,fixed = T))
+ggplot(data = trShrew, aes(x = Shrews,
+                             y = HeartRates,
+                           shape=Sleep,
+                             size = Sleep)) +
+geom_boxplot()
+# boxplot(HeartRates ~ Shrews + Sleep, data = trShrew)
+```
+
+
 ### c. Explain why we cannot fit a Two-Way ANOVA with interaction model to this dataset.
+
+```{r}
+trShrew.int = lm(HeartRates ~ Shrews * Sleep, data = trShrew)
+anova(trShrew.int)
+plot(trShrew.int, which = 1)
+hist(trShrew.int$residuals)
+```
+
+Since the residual is zero, so interaction model to this data is not fit for Two-way Anova. Besides,no pattern pattern in residuals and histogram of residual is not normal distribution. 
+
+
+```{r}
+trShrew.int.2 = update(trShrew.int, . ~ . - Shrews:Sleep)
+anova(trShrew.int.2)
+# Order doesn’t matter in Linear regression framework
+trShrew.int.3 = update(trShrew.int.2, . ~ . - Sleep)
+anova(trShrew.int.3)
+```
+
+```{r}
+trShrew.int.log = lm(log(HeartRates) ~ Shrews, data = trShrew)
+trShrew.int.log2 = lm(log(HeartRates) ~ Shrews + Sleep, data = trShrew)
+
+drop1(trShrew.int.log, test = "F")
+drop1(trShrew.int.log2, test = "F")
+```
+
+
 
 ### d. check assumptions: 
 ### d1. Write down the mathematical model for this situation, defining all appropriate parameters
 
+Consider the One-Way ANOVA:
+
+
+$Y = \beta_0 + \beta_1X_1  + \varepsilon; \ \ \ \varepsilon \sim N(0,\sigma^2)$
+
+where: 
+  
+  - Y : HeartRates - The ratio of HeartRates observed. 
+  
+  - X1 : Shrews variables respectively.
+  
+  - $\beta_1$ : Shrews regression coefficients respectively.
+  
+  - $\beta_0$ :Intercept term
+
 ### d2. State the appropriate hypotheses
+
+Hypotheses of Anova test in a linear regression:
+
+$H_0: \beta_1= 0; \ \ and \ H_1 = \ \beta_1 \neq0$
 
 ### d3. Compute an appropriate ANOVA table
 
+```{r}
+anova(trShrew.int.3)
+summary(trShrew.int.3)
+```
+
+
 ### d4. Check assumptions
 
+```{r}
+plot(trShrew.int.3, which = 1:2)
+```
+
+```{r}
+plot(trShrew.int.2, which = 1:2)
+```
+
+```{r}
+plot(trShrew.int.log, which = 1:2)
+summary(trShrew.int.log)
+```
+
+
+```{r}
+plot(trShrew.int.log2, which = 1:2)
+summary(trShrew.int.log2)
+```
 
 ### e.  State your conclusions about the effect of Shrews and Sleep on HeartRates. You do not need to statistically examine the multiple comparisons.
 
+- Shrew factor is significant on the number of HeartRates. While, Sleep factor is insignificant to HeartRates.
+
+<!-- - Both block and treatment effects are highly significant (P-Value <0.001) when model is fitted for log of coverage -->
 
