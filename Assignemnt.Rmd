@@ -71,20 +71,24 @@ panel.lm <- function (x, y, col = par("col"), bg = NA, pch = par("pch"),
 
 ```{r}
 pairs(paramo[1:5],
-      upper.panel = panel.cor,
-      diag.panel  = panel.hist,
-      lower.panel = panel.smooth,
+      upper.panel = panel.cor, # show correlation ratio
+      diag.panel  = panel.hist, , # show histogram
+      lower.panel = panel.smooth, # show the line 
+      main = "the correlation of between the variables"
       # pch = "."
       )
 ```
 
 **Comments:** 
 
+- There are moderate correlations between N and AR,EL,DEc (0.58, 0.5 , 0.69) respectively.
+
+- Meanwhile, the correlation of other variables is slightly positive. 
 
 ### b. Conduct an F-test for the overall regression
 ### b1.  Write down the mathematical multiple regression model for this situation, defining all appropriate parameters
 
-We have the multiple regression model which can be written by this: 
+- We have the multiple regression model which can be written by this: 
 
 **Regression line**: $Y = \beta_0 + \beta_1X_1 + \beta_2X_2 + \beta_3X_3 + \beta_4X_4 + \varepsilon; \ \ \ \varepsilon \sim N(0,\sigma^2)$
 
@@ -100,7 +104,7 @@ where:
 
 ### b2.  Write down the Hypotheses for the Overall ANOVA test of multiple regression
 
-Hypotheses of Anova test in multiple regression:
+- Hypotheses of Anova test in multiple regression:
 
 $H_0: \beta_1,\beta_2,\beta_3,\beta_4 = 0; \ \ and \ H_1 = \ at \ least \ one \ \beta_i \neq0$
 
@@ -116,15 +120,19 @@ paramo.aov
 
 ### b4.  Compute the F statistic for this test
 
+$F statistic =  6.085434$
+
 
 ```{r , include=FALSE}
 paramo.lm.all = lm(N ~ AR + EL + DEc + DNI , data = paramo)
 fstatis = summary(paramo.lm.all)$fstatistic[1] ; fstatis
 summary(paramo.lm.all)
 ```
+
+
 ```{r}
-n = nrow(paramo) ; k  = ncol(paramo) ; n ; k
-df1 = k - 1; df2 = n - k; df1 ;df2
+n = nrow(paramo) ; k  = ncol(paramo) 
+df1 = k - 1; df2 = n - k
 Full_RegSS  = sum(paramo.aov[["Mean Sq"]][1:4])
 Reg_MS = Full_RegSS/4   
 Res_MS = paramo.aov[["Mean Sq"]][5]
@@ -134,12 +142,18 @@ F_obs = Reg_MS/ Res_MS ; F_obs
 
 ### b5.  State the Null distribution
 
+- Null hypothesis suggests that the area of the island, elevation, distance from Ecuador,
+distance towards other islands does not affect the number of species of present birds.
 
-If  $p_{value} \le \alpha$ reject the null hypothesis. $p_{value} > \alpha$ If  fail to reject the null hypothesis
+- Alternative hypothesis suggests either area of the island or elevation or distance from
+Ecuador or distance to other islands or all predictors affect the number of species of
+birds present.
+
+- If  $p_{value} \le \alpha$ reject the null hypothesis. $p_{value} > \alpha$ If  fail to reject the null hypothesis
 
 ### b6.  Compute the P-Value
 
-we can caculate that the P-value $P(F_{4,10} \ge 6.0854) = 0.0095 < 0.05$, then we reject $H_0$ at the 5% level.
+- P-value $P(F_{4,10} \ge 6.0854) = 0.0095 < 0.05$, then we reject $H_0$ at the 5% level.
 
 ```{r}
 pf(F_obs, df1, df2, lower.tail = FALSE)
@@ -147,16 +161,21 @@ pf(F_obs, df1, df2, lower.tail = FALSE)
 
 ### b7. State your conclusion (both statistical conclusion and contextual conclusion)
 
-There is  a significant linear relationship between percentage response N and at least one of the four predictor variables.
+- There is  a significant linear relationship between percentage response N and at least one of the four predictor variables.
 
 ### c. Validate the full model using all the predictors and comment on whether it is appropriate to a multiple regression model to explain the N abundance value.
 
-Now we will check the assumptions of the model whether is appropriate to a multiple regression model  
+- Now, we will check the assumptions of the model whether is appropriate to a multiple regression model  
 
 **Check diagnostics: **
 
 ```{r}
 plot(paramo.lm.all, which = 1:2)
+# Change line color and fill color
+#create histogram of residuals
+# ggplot(data = paramo, aes(x = paramo.lm.all$residuals)) +
+#     geom_histogram(bins = 10,fill = 'steelblue', color = 'black') +
+#     labs(title = 'Histogram of Residuals', x = 'Residuals', y = 'Frequency')
 ```
 
 **Check residuals against predictors:**
@@ -170,6 +189,14 @@ plot(paramo$DEc, residuals(paramo.lm.all))
 plot(paramo$DNI, residuals(paramo.lm.all))
 ```
 
+**Comment: **
+
+1. The Normal Q-Q plot of residuals has slight bias on the top line but close to linear implying errors close to
+normally distributed.
+
+2. The residuals vs fitted plot includes a spike in the smoothed plot, but the points has not discernable pattern.
+
+3. Residuals vs predictor plots no obvious pattern. So linear model seems adequate.
 
 ### d Find the $R^2$ and comment on what it means in the context of this dataset
 
@@ -179,36 +206,55 @@ We can obtain $R^2$ for the multiple regression like this:
 
 - $R^2 = \frac{1498.857 -404.5895}{1498.857} = 0.7301$
 
+**Comment: **
+
+- For linear regression models, R-squared is a measure of goodness-of-fit. .
+
+- So, $R^2 = 0.7301$ which would indicate that 73% of the variance of the response variable being studied is explained by the variance of the predictor variable. 
+
 ```{r}
-total_SumSQ = sum(paramo.aov[["Sum Sq"]][1:5]); total_SumSQ
-SQ_reg = paramo.aov[["Sum Sq"]][5] ; SQ_reg
+total_SumSQ = sum(paramo.aov[["Sum Sq"]][1:5])
+SQ_reg = paramo.aov[["Sum Sq"]][5] 
 round((total_SumSQ - SQ_reg)/total_SumSQ,4)
 ```
 
+
+
+
 ### e. Using model selection procedures used in the course, find the best multiple regression model that explains the data. State the final fitted regression model.
 
-Based on the result of the model in 4 predictors, we can remove the insignficant variables like DNE
+- Based on the result of the model in 4 predictors, we can remove the insignificant variable  DNE
 
 ```{r}
 para.lm.2 = lm(formula = N ~ AR + EL + DEc , data = paramo)
 summary(para.lm.2)
+```
+- Next, we determine that the EL variable is insignificant and eliminate it from the model.
+
+```{r}
 para.lm.3 = lm(formula = N ~ AR  + DEc , data = paramo)
 summary(para.lm.3)
 plot(para.lm.3, which = 1:2)
 ```
 
+**Comment: **
 
+- Therefore, the final model is fitted on the predictor variables as AR and DEc for explaining the response N. 
 
 ### f. Comment on the R2 and Adjusted R2 in the full and final model you chose in part e. In particular explain why those goodness of fitness measures change but not in the same way.
 
-Default adjusted $R^2$ is: 
+- Default adjusted $R^2$ for the model $lm(N \sim AR + DEc)$ is: 
 
-Adjusted $R^2$ = $R^2 - (1-R^2) \frac{p-1}{n-p}$ where n = 14 and p = 3 for model 3.  
+- Adjusted $R^2$ = $R^2 - (1-R^2) \frac{p-1}{n-p} = 0.6588$ where n = 14 and p = 3 for model 3.  
+ 
+**Comment:**
 
+- Adjusted R-squared is a variation of R-squared that has been modified to account for the model's predictor count. The adjusted R-squared value increases when the new term improves the model more than would be anticipated by chance and decreases when the new term improves the model less than would be expected by chance.
+
+- So, we have the adjusted $R^2$ for the full model $lm(N \sim AR + EL + DEc + DNI)$ is 0.611 which is less than that of model $lm(N \sim AR + DEc)$.  In other words, as compared to the full model, the model $lm(N \sim AR + DEc)$ improves the default R squared.
 
 ```{r}
 para.anova.3 = anova(lm(formula = N ~ AR  + DEc , data = paramo))
-para.anova.3
 R_2_model3 = (sum(para.anova.3$`Sum Sq`[1:3]) - para.anova.3$`Sum Sq`[3] ) / sum(para.anova.3$`Sum Sq`[1:3])
 p = 3; n= 14
 AdjR_2_model3= R_2_model3 - (1-R_2_model3)* (p-1)/(n-p) ; AdjR_2_model3
@@ -217,20 +263,24 @@ AdjR_2_model3= R_2_model3 - (1-R_2_model3)* (p-1)/(n-p) ; AdjR_2_model3
 
 ### g. Compute a 95% confidence interval for the AR regression parameter and explain what it means in the context of this data
 
-So, 95% confidence interval for AR is:
+- So, 95% confidence interval for AR is:
 
 - $\widehat{\beta_{AR}} \pm t_{0.05,11} \times s.e(\widehat{\beta_{AR}}) = 6.683 \pm 2.032 \times 2.2644 = (1.6991,11.6669)$
 
 ```{r}
-coef_AR = summary(para.lm.3)$coeff[2] ; coef_AR
-se_AR = summary(para.lm.3)$coef[5] ; se_AR
-alpha = 0.05; t_table = qt(1- alpha/2,11) ; t_table
+coef_AR = summary(para.lm.3)$coeff[2] ; 
+se_AR = summary(para.lm.3)$coef[5] ; 
+alpha = 0.05; t_table = qt(1- alpha/2,11) ; 
 c(coef_AR - t_table*se_AR,coef_AR + t_table*se_AR)
 ```
+**Comment: ** 
+
+- We are 95% confident that the slope $\beta_{AR}$ of the population regression line is between  1.699121 and 11.666955.We conclude that that of each additional of AR unit, then the N response will increase by between 1.69 and 11.66. 
+
 
 ## Question2 
 
-```{r}
+```{r, include=FALSE}
 trShrew = read.table('data/TreeShrews.dat',header=T)
 trShrew$Shrews = as.factor(trShrew$Shrews)
 head(trShrew,3)
@@ -242,22 +292,35 @@ head(trShrew,3)
 ```{r}
 table(trShrew[, c("Shrews", "Sleep")])
 ```
-As we can see the result, the design is balanced because of  equal group sizes
+- As we can see the result, the design is balanced because of equal group sizes. 
 
 ### b. Construct two different preliminary graphs that investigate different features of the data and comment.
 
 ```{r}
 # Preliminary Investigation
 with(trShrew, interaction.plot(Shrews, Sleep, HeartRates,
-trace.label = "HeartRates",xlab = "Shrews", ylab = "Sleep", col = 1:3,fixed = T))
+trace.label = "HeartRates",xlab = "Shrews", ylab = "Sleep",main = "interaction plot of these factors",col = 1:3,fixed = T))
+```
+
+
+**Comment:**
+
+- Due to the different slopes produced by the lines connecting the levels, there is a possibility of interaction between these factors. But we need more data to illustrate more meaning of these factors.
+
+
+```{r}
 ggplot(data = trShrew, aes(x = Shrews,
                              y = HeartRates,
                            shape=Sleep,
-                             size = Sleep)) +
+                             size = Sleep,
+                            main = "boxplot of these factors"
+                           )) +
 geom_boxplot()
-# boxplot(HeartRates ~ Shrews + Sleep, data = trShrew)
 ```
 
+**Comment:**
+
+- Due to a lack of data in these factors, the box plot with the number of cells is difficult to comprehend.
 
 ### c. Explain why we cannot fit a Two-Way ANOVA with interaction model to this dataset.
 
@@ -268,7 +331,11 @@ plot(trShrew.int, which = 1)
 hist(trShrew.int$residuals)
 ```
 
-Since the residual is zero, so interaction model to this data is not fit for Two-way Anova. Besides,no pattern pattern in residuals and histogram of residual is not normal distribution. 
+**Comment:**
+
+- Since the residual is zero, the interaction model for this data is unsuitable for Two-way Anova. Besides, the residual distribution is not normal distribution.
+
+- Therefore, we remove the interaction of  Shrews and Sleeps which is not significant. 
 
 
 ```{r}
@@ -278,16 +345,18 @@ anova(trShrew.int.2)
 trShrew.int.3 = update(trShrew.int.2, . ~ . - Sleep)
 anova(trShrew.int.3)
 ```
+**Comment:**
+
+- Reviewing the p value of $lm(HeartRate \sim Shrews \ + \ Sleep)$, we update to remove the Sleep which is insignificant.
+
+- Next, we transform a log model to acquire a better p value. 
 
 ```{r}
 trShrew.int.log = lm(log(HeartRates) ~ Shrews, data = trShrew)
-trShrew.int.log2 = lm(log(HeartRates) ~ Shrews + Sleep, data = trShrew)
-
 drop1(trShrew.int.log, test = "F")
-drop1(trShrew.int.log2, test = "F")
 ```
 
-
+- Therefore, we choose the log model with only the Shrews predictor. 
 
 ### d. check assumptions: 
 ### d1. Write down the mathematical model for this situation, defining all appropriate parameters
@@ -315,36 +384,41 @@ $H_0: \beta_1= 0; \ \ and \ H_1 = \ \beta_1 \neq0$
 
 ### d3. Compute an appropriate ANOVA table
 
+- The anova will be:
 ```{r}
-anova(trShrew.int.3)
-summary(trShrew.int.3)
+anova(trShrew.int.log)
+```
+
+- Summary of model will be:
+
+```{r}
+summary(trShrew.int.log)
 ```
 
 
 ### d4. Check assumptions
 
 ```{r}
+plot(trShrew.int.log, which = 1:2)
+```
+
+```{r}
 plot(trShrew.int.3, which = 1:2)
 ```
 
-```{r}
-plot(trShrew.int.2, which = 1:2)
-```
-
-```{r}
-plot(trShrew.int.log, which = 1:2)
-summary(trShrew.int.log)
-```
 
 
-```{r}
-plot(trShrew.int.log2, which = 1:2)
-summary(trShrew.int.log2)
-```
+**Comment: **
+
+- The normal quantile plot of residuals is closer to linear suggesting residuals are close to normally distributed.
+
+- There is no pattern in the residual plot vs fitted values, the variability seems constant between effects.
+
+- The log model appears slightly better than it does without the log model.
 
 ### e.  State your conclusions about the effect of Shrews and Sleep on HeartRates. You do not need to statistically examine the multiple comparisons.
 
-- Shrew factor is significant on the number of HeartRates. While, Sleep factor is insignificant to HeartRates.
+- According to the findings, the Shrew factor has a significant effect on the number of HeartRates. While the Sleep factor has a insignificant effect on HeartRates.
 
 <!-- - Both block and treatment effects are highly significant (P-Value <0.001) when model is fitted for log of coverage -->
 
